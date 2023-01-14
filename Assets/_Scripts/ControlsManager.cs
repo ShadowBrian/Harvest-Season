@@ -15,27 +15,27 @@ public class ControlsManager : MonoBehaviour
 	public InputDevice currentInputDevice { get; private set; }
 	public string currentScheme { get; private set; }
 
-    public bool IsGamepad => currentScheme.Equals("Gamepad");
+	public bool IsGamepad => currentScheme.Equals("Gamepad");
 
-    public Vector2 controllerSensitivityScale;
+	public Vector2 controllerSensitivityScale;
 
-    public Shotgun gun; 
-    public void Awake()
+	public Shotgun gun;
+	public void Awake()
 	{
 		controls = new Controls();
 
-		controls.Main.Interact.performed += InteractPressed;
+		/*controls.Main.Interact.performed += InteractPressed;
 		controls.Main.Running.performed += HandleRunning;
 		controls.Main.Pause.performed += Pause;
 		controls.Main.UIControllerSelect.performed += UISelect;
-        controls.Main.Fire.performed += Fire;
-         
-        InputSystem.onActionChange += OnActionChange;
+		controls.Main.Fire.performed += Fire;*/
+
+		InputSystem.onActionChange += OnActionChange;
 
 		controls.Enable();
 	}
 
-	private  void OnActionChange(object obj, InputActionChange change)
+	private void OnActionChange(object obj, InputActionChange change)
 	{
 		if (change == InputActionChange.ActionPerformed)
 		{
@@ -55,7 +55,7 @@ public class ControlsManager : MonoBehaviour
 					if (currentScheme != "Gamepad")
 						lockedNav.OnControllerInput(true);
 
-					currentScheme = "Gamepad"; 
+					currentScheme = "Gamepad";
 				}
 			}
 		}
@@ -63,33 +63,103 @@ public class ControlsManager : MonoBehaviour
 
 	public void OnDestroy()
 	{
-		controls.Main.Interact.performed-= InteractPressed;
+		/*controls.Main.Interact.performed -= InteractPressed;
 		controls.Main.Running.performed -= HandleRunning;
 		controls.Main.Pause.performed -= Pause;
 		controls.Main.UIControllerSelect.performed -= UISelect;
-        controls.Main.Fire.performed -= Fire;
-      
+		controls.Main.Fire.performed -= Fire;*/
+
 
 		InputSystem.onActionChange -= OnActionChange;
 	}
 
+	bool Fired;
+	bool Running, PressedRunning;
+
+	public void HandleVRInput()
+	{
+		if (UnityXRInputBridge.instance.GetButtonDown(XRButtonMasks.triggerButton, XRHandSide.LeftHand))
+		{
+			InteractPressed();
+		}
+
+		if (UnityXRInputBridge.instance.GetButtonDown(XRButtonMasks.primaryButton, XRHandSide.LeftHand))
+		{
+			UISelect();
+		}
+
+		HandleRunning();
+
+		if (UnityXRInputBridge.instance.GetButtonDown(XRButtonMasks.primary2DAxisClick, XRHandSide.LeftHand) && !PressedRunning)
+		{
+			Running = !Running;
+			PressedRunning = true;
+		}
+
+		if (PlayerController.Instance.moveInput.magnitude < 0.2f)
+		{
+			Running = false;
+		}
+
+		if (UnityXRInputBridge.instance.GetButtonUp(XRButtonMasks.primary2DAxisClick, XRHandSide.LeftHand) && PressedRunning)
+		{
+			PressedRunning = false;
+		}
+
+		if (UnityXRInputBridge.instance.GetButtonDown(XRButtonMasks.triggerButton, XRHandSide.RightHand) && !Fired)
+		{
+			Fire();
+			Fired = true;
+		}
+
+		if (UnityXRInputBridge.instance.GetButtonUp(XRButtonMasks.triggerButton, XRHandSide.RightHand) && Fired)
+		{
+			Fired = false;
+		}
+	}
+
+	bool JustRotated;
+
 	public void Update()
-	{ 
+	{
 		if (GameManager.Instance)
 		{
 			if (GameManager.Instance.AllowInput)
 			{
-				PlayerController.Instance.moveInput = controls.Main.Move.ReadValue<Vector2>();
+				PlayerController.Instance.moveInput = UnityXRInputBridge.instance.GetVec2(XR2DAxisMasks.primary2DAxis, XRHandSide.LeftHand);// controls.Main.Move.ReadValue<Vector2>();
+				if (!JustRotated)
+				{
+					if (UnityXRInputBridge.instance.GetVec2(XR2DAxisMasks.primary2DAxis, XRHandSide.RightHand).x > 0.5f)
+					{
+						PlayerController.Instance.lookInput = new Vector2(45, 0);
+						JustRotated = true;
+					}
+					if (UnityXRInputBridge.instance.GetVec2(XR2DAxisMasks.primary2DAxis, XRHandSide.RightHand).x < -0.5f)
+					{
+						PlayerController.Instance.lookInput = new Vector2(-45, 0);
+						JustRotated = true;
+					}
+				}
+				else
+				{
+					PlayerController.Instance.lookInput = Vector2.zero;
+					if (UnityXRInputBridge.instance.GetVec2(XR2DAxisMasks.primary2DAxis, XRHandSide.RightHand).x < 0.5f && UnityXRInputBridge.instance.GetVec2(XR2DAxisMasks.primary2DAxis, XRHandSide.RightHand).x > -0.5f)
+					{
+						JustRotated = false;
+					}
+				}
+				HandleVRInput();
 
-                if (!IsGamepad)
+
+				/*if (!IsGamepad)
                 {
                     PlayerController.Instance.lookInput = controls.Main.Look.ReadValue<Vector2>() * 0.5f * 0.1f;
                 }
                 else
                 {
                     PlayerController.Instance.lookInput = controls.Main.Look.ReadValue<Vector2>() * Time.deltaTime * controllerSensitivityScale; 
-                }
-                //PlayerController.Instance.lookInput = controls.Main.Look.ReadValue<Vector2>() * 0.5f * 0.1f;
+                }*/
+				//PlayerController.Instance.lookInput = controls.Main.Look.ReadValue<Vector2>() * 0.5f * 0.1f;
 			}
 			else
 			{
@@ -98,18 +168,18 @@ public class ControlsManager : MonoBehaviour
 			}
 		}
 
-		lockedNav.Input(controls.Main.UIController.ReadValue<float>());  
+		lockedNav.Input(controls.Main.UIController.ReadValue<float>());
 	}
 
-    public void Fire(InputAction.CallbackContext ctx)
-    { 
-        if (ctx.performed && !GameManager.Instance.GameOver) 
-        { 
-            gun.TryFire(); 
-        }
-    }
+	public void Fire()
+	{
+		if (!GameManager.Instance.GameOver)
+		{
+			gun.TryFire();
+		}
+	}
 
-	public void UISelect(InputAction.CallbackContext ctx)
+	public void UISelect()
 	{
 		if (lockedNav.gameObject.activeInHierarchy)
 		{
@@ -117,7 +187,7 @@ public class ControlsManager : MonoBehaviour
 		}
 	}
 
-	public void InteractPressed(InputAction.CallbackContext ctx)
+	public void InteractPressed()
 	{
 		if (GameManager.Instance && GameManager.Instance.AllowInput)
 		{
@@ -125,20 +195,20 @@ public class ControlsManager : MonoBehaviour
 		}
 	}
 
-    public void Pause(InputAction.CallbackContext ctx)
+	public void Pause()
 	{
 		if (GameManager.Instance)
 		{
 			GameManager.Instance.Pause();
-			}
-    }
+		}
+	}
 
-	public void HandleRunning(InputAction.CallbackContext ctx)
+	public void HandleRunning()
 	{
-			if (GameManager.Instance && GameManager.Instance.AllowInput)
-			{
-				PlayerController.Instance.isRunning = ctx.ReadValueAsButton();
-			}
+		if (GameManager.Instance && GameManager.Instance.AllowInput)
+		{
+			PlayerController.Instance.isRunning = Running;//ctx.ReadValueAsButton();
+		}
 	}
 
 }
