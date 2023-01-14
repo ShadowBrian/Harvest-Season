@@ -4,78 +4,78 @@ using UnityEngine;
 
 public class LockedNavigation : MonoBehaviour
 {
-    public MenuButtons[] buttons;
-    public int currentSelected;
-    public ControlsManager controlsManager; 
-    public bool active;
-     
-    public bool xAxis; 
-    public bool wraps = false; 
+	public MenuButtons[] buttons;
+	public int currentSelected;
+	public ControlsManager controlsManager;
+	public bool active;
 
-    public void OnEnable()
-    {
-        OnControllerInput(controlsManager.currentScheme == "Gamepad");
-        controlsManager.lockedNav = this; 
-    }
+	public bool xAxis;
+	public bool wraps = false;
 
-    public void OnDisable()
-    {
-        active = false;
-    }
+	public void OnEnable()
+	{
+		OnControllerInput(controlsManager.currentScheme == "Gamepad");
+		controlsManager.lockedNav = this;
+	}
 
-    public void OnControllerInput(bool input)
-    {
-        Debug.Log("Locked nav enabled");
-        if (input && !active)
-            buttons[currentSelected].MouseEnter();
-        else if(!input && active)
-            buttons[currentSelected].MouseExit();
+	public void OnDisable()
+	{
+		active = false;
+	}
 
-        active = input;
-    }
+	public void OnControllerInput(bool input)
+	{
+		//Debug.Log("Locked nav enabled");
+		if (input && !active)
+			buttons[currentSelected].MouseEnter();
+		else if (!input && active)
+			buttons[currentSelected].MouseExit();
 
-    public void SelectButton()
-    {
-        if (active)
-            buttons[currentSelected].OnClick();
-    } 
+		active = input;
+	}
 
-    float nextInput = 0f; 
-     
-    public void Input(float upDownInput)
-    {
-        if (!active) 
-            return;
+	public void SelectButton()
+	{
+		if (active)
+			buttons[currentSelected].OnClick();
+	}
 
-        float input = upDownInput;  
+	float nextInput = 0f;
 
-        if (Mathf.Abs(input) > 0f && Time.unscaledTime > nextInput)
-        {
-            nextInput = Time.unscaledTime + 0.6f;
+	public void Input(float upDownInput)
+	{
+		if (!active)
+			return;
 
-            buttons[currentSelected].MouseExit();
+		float input = upDownInput;
 
-            if (input > 0)
-                currentSelected -= 1;
-            else if(input < 0)
-                currentSelected += 1;
+		if (Mathf.Abs(input) > 0f && Time.unscaledTime > nextInput)
+		{
+			nextInput = Time.unscaledTime + 0.6f;
 
-            if (wraps)
-            {
-                if (currentSelected >= buttons.Length)
-                    currentSelected = 0; 
-                else if (currentSelected < 0)
-                    currentSelected = buttons.Length - 1;
-            }
-            else
-            {
-                currentSelected = Mathf.Clamp(currentSelected, 0, buttons.Length - 1);
-            } 
+			buttons[currentSelected].MouseExit();
 
-            buttons[currentSelected].MouseEnter();
+			if (input > 0)
+				currentSelected -= 1;
+			else if (input < 0)
+				currentSelected += 1;
+
+			if (wraps)
+			{
+				if (currentSelected >= buttons.Length)
+					currentSelected = 0;
+				else if (currentSelected < 0)
+					currentSelected = buttons.Length - 1;
+			}
+			else
+			{
+				currentSelected = Mathf.Clamp(currentSelected, 0, buttons.Length - 1);
+			}
+
+			buttons[currentSelected].MouseEnter();
 
 
-        }
-    }
+		}
+	}
 
 }

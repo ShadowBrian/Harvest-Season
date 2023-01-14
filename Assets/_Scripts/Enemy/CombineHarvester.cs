@@ -5,307 +5,307 @@ using NaughtyAttributes;
 using UnityEngine.AI;
 
 public class CombineHarvester : MonoBehaviour
-{ 
-    [Range(0,1)]public float enginePower;
-    [Range(0, 1)] public float bladePower;
+{
+	[Range(0, 1)] public float enginePower;
+	[Range(0, 1)] public float bladePower;
 
-    public GameObject lights;
+	public GameObject lights;
 
-    public AudioSource oneShotSource; 
-    public AudioClip engineStartupClip;
-    public AudioClip bladeStartupClip; 
-    public AudioClip lightsOnClip; 
-    public AudioClip harvesterDestroyClip;  
+	public AudioSource oneShotSource;
+	public AudioClip engineStartupClip;
+	public AudioClip bladeStartupClip;
+	public AudioClip lightsOnClip;
+	public AudioClip harvesterDestroyClip;
 
-    public AudioClip enigneClip;
-    public AudioSource engineSource;
-    public Transform bodyTransform; 
+	public AudioClip enigneClip;
+	public AudioSource engineSource;
+	public Transform bodyTransform;
 
-    public AudioClip bladesClip;
-    public AudioSource bladeSource;
-    public Transform bladeTransform; 
-    public float bladeSpeed;
+	public AudioClip bladesClip;
+	public AudioSource bladeSource;
+	public Transform bladeTransform;
+	public float bladeSpeed;
 
 
-    [Header("AI")]
-    public NavMeshAgent navAgent; 
-    public Transform target;
-    public float moveSpeed = 0f;
+	[Header("AI")]
+	public NavMeshAgent navAgent;
+	public Transform target;
+	public float moveSpeed = 0f;
 
-    public Collider killTrigger;
+	public Collider killTrigger;
 
-    public float lastCornDestroyTime = 0f;
-    public ParticleSystem cornParticleSystem;
+	public float lastCornDestroyTime = 0f;
+	public ParticleSystem cornParticleSystem;
 
-    public float health = 100;
+	public float health = 100;
 
-    public AudioClip[] damageClips;
+	public AudioClip[] damageClips;
 
-    public ParticleSystem sparks;
-    public ParticleSystem lightSmoke;
-    public ParticleSystem damageFire;
-    public ParticleSystem fullFire;
-    public AudioSource burningSource;
-    public AudioClip lowExplosion;
+	public ParticleSystem sparks;
+	public ParticleSystem lightSmoke;
+	public ParticleSystem damageFire;
+	public ParticleSystem fullFire;
+	public AudioSource burningSource;
+	public AudioClip lowExplosion;
 
-    public float timeOfDeath; 
+	public float timeOfDeath;
 
-    public void Awake()
-    {
-        bladeSource.volume = 0f;
-        bladeSource.clip = bladesClip;
-        bladeSource.loop = true; 
-        bladeSource.Play();
-         
-        engineSource.volume = 0f;
-        engineSource.clip = enigneClip;
-        engineSource.loop = true; 
-        engineSource.Play();
-    }
+	public void Awake()
+	{
+		bladeSource.volume = 0f;
+		bladeSource.clip = bladesClip;
+		bladeSource.loop = true;
+		bladeSource.Play();
 
-    public void Update()
-    { 
-        lights.SetActive(enginePower > 0);
+		engineSource.volume = 0f;
+		engineSource.clip = enigneClip;
+		engineSource.loop = true;
+		engineSource.Play();
+	}
 
-        engineSource.volume = enginePower;
-        bladeSource.volume = bladePower;  
+	public void Update()
+	{
+		lights.SetActive(enginePower > 0);
 
-        bladeTransform.Rotate(-Vector3.forward, bladePower * bladeSpeed * Time.deltaTime);
-         
-        Vector3 bodyPosition = bodyTransform.localPosition;
-        bodyPosition.y = Mathf.PingPong(Time.time * 5f, 1f) * 0.02f * enginePower;
-        bodyTransform.localPosition = bodyPosition;
+		engineSource.volume = enginePower;
+		bladeSource.volume = bladePower;
 
-        if (target != null)
-        {
-            navAgent.SetDestination(target.position);
+		bladeTransform.Rotate(-Vector3.forward, bladePower * bladeSpeed * Time.deltaTime);
 
-            float direction = TargetDirectionCheck();
+		Vector3 bodyPosition = bodyTransform.localPosition;
+		bodyPosition.y = Mathf.PingPong(Time.time * 5f, 1f) * 0.02f * enginePower;
+		bodyTransform.localPosition = bodyPosition;
 
-            Debug.Log(direction);
+		if (target != null)
+		{
+			navAgent.SetDestination(target.position);
 
-            if (direction < 0.9f && enginePower > 0f)
-            {
-                navAgent.speed = 0.1f;
-            }
-            else
-            {
-                navAgent.speed = enginePower * moveSpeed;
-            }
+			float direction = TargetDirectionCheck();
 
-            if (Time.time > lastCornDestroyTime)
-            {
-                if (cornParticleSystem.isPlaying)
-                    cornParticleSystem.Stop();
-            } 
-            else if (!cornParticleSystem.isPlaying)
-            { 
-                cornParticleSystem.Play();
-            }
-        }
-    }
+			//Debug.Log(direction);
 
-    [Button]
-    public void DebugStartParticle()
-    {
-        PlayClipOneShot(harvesterDestroyClip, 0.7f);
-        lastCornDestroyTime = Time.time + 3f;
-    }
+			if (direction < 0.9f && enginePower > 0f)
+			{
+				navAgent.speed = 0.1f;
+			}
+			else
+			{
+				navAgent.speed = enginePower * moveSpeed;
+			}
 
-    public void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.layer == LayerMask.NameToLayer("Destructable") && enginePower > 0 && bladePower > 0)
-        {
-            //TEMP  
-            other.gameObject.SetActive(false);
-            PlayClipOneShot(harvesterDestroyClip, 0.7f);
-            lastCornDestroyTime = Time.time + 3f;
-        }
-        else if (other.gameObject.layer == LayerMask.NameToLayer("Player") && enginePower > 0 && bladePower > 0)
-        {
-            if (!GameManager.Instance.GameOver) 
-            { 
-                GameManager.Instance.KillPlayer();
-                moveSpeed = 0f;
-            }
-        }
-    }
+			if (Time.time > lastCornDestroyTime)
+			{
+				if (cornParticleSystem.isPlaying)
+					cornParticleSystem.Stop();
+			}
+			else if (!cornParticleSystem.isPlaying)
+			{
+				cornParticleSystem.Play();
+			}
+		}
+	}
 
-    public void PlayClipOneShot(AudioClip clip, float volume)
-    {
-        oneShotSource.volume = volume; 
-        oneShotSource.PlayOneShot(clip);
-    }
+	[Button]
+	public void DebugStartParticle()
+	{
+		PlayClipOneShot(harvesterDestroyClip, 0.7f);
+		lastCornDestroyTime = Time.time + 3f;
+	}
 
-    [Button] 
-    public void StartEngine()
-    {
-        StartCoroutine(StartEngineRoutine());
-    }
+	public void OnTriggerEnter(Collider other)
+	{
+		if (other.gameObject.layer == LayerMask.NameToLayer("Destructable") && enginePower > 0 && bladePower > 0)
+		{
+			//TEMP  
+			other.gameObject.SetActive(false);
+			PlayClipOneShot(harvesterDestroyClip, 0.7f);
+			lastCornDestroyTime = Time.time + 3f;
+		}
+		else if (other.gameObject.layer == LayerMask.NameToLayer("Player") && enginePower > 0 && bladePower > 0)
+		{
+			if (!GameManager.Instance.GameOver)
+			{
+				GameManager.Instance.KillPlayer();
+				moveSpeed = 0f;
+			}
+		}
+	}
 
-    [Button]
-    public void StartBlades()
-    {
-        StartCoroutine(StartBladesRoutine());
-    }
+	public void PlayClipOneShot(AudioClip clip, float volume)
+	{
+		oneShotSource.volume = volume;
+		oneShotSource.PlayOneShot(clip);
+	}
 
-    public IEnumerator StartEngineRoutine()
-    {
-        PlayClipOneShot(engineStartupClip, 0.7f);
+	[Button]
+	public void StartEngine()
+	{
+		StartCoroutine(StartEngineRoutine());
+	}
 
-        yield return new WaitForSeconds(2f);
+	[Button]
+	public void StartBlades()
+	{
+		StartCoroutine(StartBladesRoutine());
+	}
 
-        float t = 0;
+	public IEnumerator StartEngineRoutine()
+	{
+		PlayClipOneShot(engineStartupClip, 0.7f);
 
-        PlayClipOneShot(lightsOnClip, 0.5f);
+		yield return new WaitForSeconds(2f);
 
-        while (t < 1.5f)
-        {
-            t += Time.deltaTime;
-            enginePower = Mathf.Lerp(0, 0.8f, t/1.5f); 
-            yield return null;
-        }
+		float t = 0;
 
-        StartBlades();
-    }
+		PlayClipOneShot(lightsOnClip, 0.5f);
 
-    public IEnumerator StartBladesRoutine()
-    {
-        PlayClipOneShot(bladeStartupClip, 0.7f);
+		while (t < 1.5f)
+		{
+			t += Time.deltaTime;
+			enginePower = Mathf.Lerp(0, 0.8f, t / 1.5f);
+			yield return null;
+		}
 
-        yield return new WaitForSeconds(0.5f);
+		StartBlades();
+	}
 
-        float t = 0;
-        while (t < 4f)
-        {
-            t += Time.deltaTime; 
-            bladePower = Mathf.Lerp(0, 1f, t /4f);
-            yield return null;
-        }
-    }
+	public IEnumerator StartBladesRoutine()
+	{
+		PlayClipOneShot(bladeStartupClip, 0.7f);
 
-    public void PowerDown()
-    {
-        StartCoroutine(PowerDownRoutine());
-    }
+		yield return new WaitForSeconds(0.5f);
 
-    public IEnumerator PowerDownRoutine()
-    {
-        float startEnginePower = enginePower;
-        float startBladePower = bladePower;
+		float t = 0;
+		while (t < 4f)
+		{
+			t += Time.deltaTime;
+			bladePower = Mathf.Lerp(0, 1f, t / 4f);
+			yield return null;
+		}
+	}
 
-        float t = 0;
-        while (t < 2f) 
-        { 
-            t += Time.deltaTime; 
-            bladePower = Mathf.Lerp(startBladePower, 0, t / 2f);
-            enginePower = Mathf.Lerp(startEnginePower, 0, t / 2f); 
-            yield return null;
-        }
-    }
+	public void PowerDown()
+	{
+		StartCoroutine(PowerDownRoutine());
+	}
 
-    public void DealDamage(float damage)
-    {
-        if (health > 0)
-        {
-            if (damage > 2f)
-            {
-                health -= damage;
+	public IEnumerator PowerDownRoutine()
+	{
+		float startEnginePower = enginePower;
+		float startBladePower = bladePower;
 
-                sparks.Play();
-                PlayClipOneShot(damageClips[Random.Range(0, damageClips.Length)], 1f);
-            }
+		float t = 0;
+		while (t < 2f)
+		{
+			t += Time.deltaTime;
+			bladePower = Mathf.Lerp(startBladePower, 0, t / 2f);
+			enginePower = Mathf.Lerp(startEnginePower, 0, t / 2f);
+			yield return null;
+		}
+	}
 
-            //TODO - hit feedback.
+	public void DealDamage(float damage)
+	{
+		if (health > 0)
+		{
+			if (damage > 2f)
+			{
+				health -= damage;
 
-            health = Mathf.Clamp(health, 0, int.MaxValue);
+				sparks.Play();
+				PlayClipOneShot(damageClips[Random.Range(0, damageClips.Length)], 1f);
+			}
 
-            if (health <= 0)
-            {
-                KillHarvester();
-            }
-            else if (health < 30)
-            {
-                damageFire.Play();
-                burningSource.volume = 0.3f;
-            }
-            else if (health < 60) 
-            {
-                lightSmoke.Play();
-            } 
-        }
-    }
-     
-    public void KillHarvester() 
-    { 
-        PowerDown();
-        PlayClipOneShot(lowExplosion, 0.7f);
-        burningSource.volume = 0.6f; 
-        lightSmoke.Stop();
-        damageFire.Stop();
-        fullFire.Play();
-        timeOfDeath = Time.time;
-        //TODO - full kill routine.
-    }
+			//TODO - hit feedback.
 
-    public float TargetDirectionCheck() 
-    { 
-        if (target == null)
-            return 0;
-         
+			health = Mathf.Clamp(health, 0, int.MaxValue);
 
-        Vector3 forward = transform.forward;
+			if (health <= 0)
+			{
+				KillHarvester();
+			}
+			else if (health < 30)
+			{
+				damageFire.Play();
+				burningSource.volume = 0.3f;
+			}
+			else if (health < 60)
+			{
+				lightSmoke.Play();
+			}
+		}
+	}
 
-        Vector3 targetPosition = navAgent.path.corners[1];  
+	public void KillHarvester()
+	{
+		PowerDown();
+		PlayClipOneShot(lowExplosion, 0.7f);
+		burningSource.volume = 0.6f;
+		lightSmoke.Stop();
+		damageFire.Stop();
+		fullFire.Play();
+		timeOfDeath = Time.time;
+		//TODO - full kill routine.
+	}
 
-        targetPosition.y = transform.position.y;
+	public float TargetDirectionCheck()
+	{
+		if (target == null)
+			return 0;
 
-        Vector3 toOther = targetPosition - transform.position;
 
-        Debug.Log(toOther);
+		Vector3 forward = transform.forward;
 
-        return Vector3.Dot(forward, toOther.normalized);  
-    }
+		Vector3 targetPosition = navAgent.path.corners[1];
 
-    Vector3 FindPointAlongPath(Vector3[] path, float distanceToTravel)
-    {
-        if (distanceToTravel < 0)
-        {
-            return path[0];
-        }
+		targetPosition.y = transform.position.y;
 
-        //Loop Through Each Corner in Path
-        for (int i = 0; i < path.Length - 1; i++)
-        {
-            //If the distance between the next to points is less than the distance you have left to travel
-            if (distanceToTravel <= Vector3.Distance(path[i], path[i + 1]))
-            {
-                //Calculate the point that is the correct distance between the two points and return it
-                Vector3 directionToTravel = path[i + 1] - path[i];
-                directionToTravel.Normalize();
-                return (path[i] + (directionToTravel * distanceToTravel));
-            }
-            else
-            {
-                //otherwise subtract the distance between those 2 points from the distance left to travel
-                distanceToTravel -= Vector3.Distance(path[i], path[i + 1]);
-            }
-        }
+		Vector3 toOther = targetPosition - transform.position;
 
-        //if the distance to travel is greater than the distance of the path, return the final point
-        return path[path.Length - 1];
-    }
+		//Debug.Log(toOther);
+
+		return Vector3.Dot(forward, toOther.normalized);
+	}
+
+	Vector3 FindPointAlongPath(Vector3[] path, float distanceToTravel)
+	{
+		if (distanceToTravel < 0)
+		{
+			return path[0];
+		}
+
+		//Loop Through Each Corner in Path
+		for (int i = 0; i < path.Length - 1; i++)
+		{
+			//If the distance between the next to points is less than the distance you have left to travel
+			if (distanceToTravel <= Vector3.Distance(path[i], path[i + 1]))
+			{
+				//Calculate the point that is the correct distance between the two points and return it
+				Vector3 directionToTravel = path[i + 1] - path[i];
+				directionToTravel.Normalize();
+				return (path[i] + (directionToTravel * distanceToTravel));
+			}
+			else
+			{
+				//otherwise subtract the distance between those 2 points from the distance left to travel
+				distanceToTravel -= Vector3.Distance(path[i], path[i + 1]);
+			}
+		}
+
+		//if the distance to travel is greater than the distance of the path, return the final point
+		return path[path.Length - 1];
+	}
 
 #if UNITY_EDITOR
 
-    public void OnDrawGizmos() 
-    {
-        if (navAgent.path != null && navAgent.path.corners.Length > 1)
-        {
-            Gizmos.color = Color.magenta;
-            Gizmos.DrawSphere(navAgent.path.corners[1], 1f);
-        }
-    }
+	public void OnDrawGizmos()
+	{
+		if (navAgent.path != null && navAgent.path.corners.Length > 1)
+		{
+			Gizmos.color = Color.magenta;
+			Gizmos.DrawSphere(navAgent.path.corners[1], 1f);
+		}
+	}
 
 #endif
 }

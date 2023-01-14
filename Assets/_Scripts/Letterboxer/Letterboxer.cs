@@ -2,123 +2,123 @@
 
 namespace Letterboxer
 {
-    [ExecuteInEditMode, RequireComponent(typeof(Camera))]
-    public class Letterboxer : MonoBehaviour
-    {
-        [SerializeField]
-        private int targetWidth = 1280;
+	[ExecuteInEditMode, RequireComponent(typeof(Camera))]
+	public class Letterboxer : MonoBehaviour
+	{
+		[SerializeField]
+		private int targetWidth = 1280;
 
-        [SerializeField]
-        private int targetHeight = 720;
+		[SerializeField]
+		private int targetHeight = 720;
 
-        [SerializeField]
-        private CameraType type = CameraType.MaintainAspectRatio;
+		[SerializeField]
+		private CameraType type = CameraType.MaintainAspectRatio;
 
-        private new Camera camera;
-        private Camera Camera
-        {
-            get { return camera ?? (camera = GetComponent<Camera>()); }
-        }
+		private new Camera camera;
+		private Camera Camera
+		{
+			get { return camera ?? (camera = GetComponent<Camera>()); }
+		}
 
-        private int currentScreenWidth = -1;
+		private int currentScreenWidth = -1;
 
-        private int currentScreenHeight = -1;
+		private int currentScreenHeight = -1;
 
-        private bool shouldUpdateLetterbox = false; 
+		private bool shouldUpdateLetterbox = false;
 
-        private void Update()
-        {
-            if (ShouldUpdateLetterbox())
-            {
-                currentScreenWidth = Screen.width;
-                currentScreenHeight = Screen.height;
+		private void Update()
+		{
+			if (ShouldUpdateLetterbox())
+			{
+				currentScreenWidth = Screen.width;
+				currentScreenHeight = Screen.height;
 
-                UpdateLetterbox();
-            }
-        }
+				UpdateLetterbox();
+			}
+		}
 
-        public void LateUpdate()
-        {
-            shouldUpdateLetterbox = true; 
-        }
+		public void LateUpdate()
+		{
+			shouldUpdateLetterbox = true;
+		}
 
-        private void UpdateLetterbox()
-        {
-            if (type == CameraType.MaintainAspectRatio)
-            {
-                HandleMaintainAspectRatio();
-            }
-            else
-            {
-                HandleBestFit();
-            }
-        }
+		private void UpdateLetterbox()
+		{
+			if (type == CameraType.MaintainAspectRatio)
+			{
+				HandleMaintainAspectRatio();
+			}
+			else
+			{
+				HandleBestFit();
+			}
+		}
 
-        private void HandleMaintainAspectRatio()
-        {
-            float targetAspect = targetWidth / (float)targetHeight;
-            float windowAspect = currentScreenWidth / (float)currentScreenHeight;
-            float scaleHeight = windowAspect / targetAspect;
+		private void HandleMaintainAspectRatio()
+		{
+			float targetAspect = targetWidth / (float)targetHeight;
+			float windowAspect = currentScreenWidth / (float)currentScreenHeight;
+			float scaleHeight = windowAspect / targetAspect;
 
-            Camera.rect = scaleHeight < 1.0f ? GetLetterboxRect(scaleHeight) : GetPillarboxRect(scaleHeight);
-        }
+			Camera.rect = scaleHeight < 1.0f ? GetLetterboxRect(scaleHeight) : GetPillarboxRect(scaleHeight);
+		}
 
-        private void HandleBestFit()
-        {
-            int nearestWidth = currentScreenWidth / targetWidth * targetWidth;
-            int nearestHeight = currentScreenHeight / targetHeight * targetHeight;
+		private void HandleBestFit()
+		{
+			int nearestWidth = currentScreenWidth / targetWidth * targetWidth;
+			int nearestHeight = currentScreenHeight / targetHeight * targetHeight;
 
-            int scaleFactor = GetScaleFactor(nearestWidth, nearestHeight);
-            float xWidthFactor = targetWidth * scaleFactor / (float)currentScreenWidth;
-            float yHeightFactor = targetHeight * scaleFactor / (float)currentScreenHeight;
- 
-            Camera.rect = new Rect(GetRectPosition(xWidthFactor, currentScreenWidth), GetRectPosition(yHeightFactor, currentScreenHeight), xWidthFactor, yHeightFactor);
-        }
+			int scaleFactor = GetScaleFactor(nearestWidth, nearestHeight);
+			float xWidthFactor = targetWidth * scaleFactor / (float)currentScreenWidth;
+			float yHeightFactor = targetHeight * scaleFactor / (float)currentScreenHeight;
 
-        private int GetScaleFactor(int nearestWidth, int nearestHeight)
-        {
-            int xScaleFactor = nearestWidth / targetWidth;
-            int yScaleFactor = nearestHeight / targetHeight;
+			Camera.rect = new Rect(GetRectPosition(xWidthFactor, currentScreenWidth), GetRectPosition(yHeightFactor, currentScreenHeight), xWidthFactor, yHeightFactor);
+		}
 
-            return yScaleFactor < xScaleFactor ? yScaleFactor : xScaleFactor;
-        }
+		private int GetScaleFactor(int nearestWidth, int nearestHeight)
+		{
+			int xScaleFactor = nearestWidth / targetWidth;
+			int yScaleFactor = nearestHeight / targetHeight;
 
-        private float GetRectPosition(float factor, int screenSize)
-        {
-            return (1 - factor) / 2f + GetOffset(screenSize);
-        }
+			return yScaleFactor < xScaleFactor ? yScaleFactor : xScaleFactor;
+		}
 
-        private float GetOffset(int size)
-        {
-            return size % 2 == 0 ? 0 : 1f / size;
-        }
+		private float GetRectPosition(float factor, int screenSize)
+		{
+			return (1 - factor) / 2f + GetOffset(screenSize);
+		}
 
-        private Rect GetLetterboxRect(float scaleHeight)
-        {
-            return new Rect(0, (1f - scaleHeight) / 2f, 1f, scaleHeight);
-        }
+		private float GetOffset(int size)
+		{
+			return size % 2 == 0 ? 0 : 1f / size;
+		}
 
-        private Rect GetPillarboxRect(float scaleHeight)
-        {
-            float scalewidth = 1.0f / scaleHeight;
+		private Rect GetLetterboxRect(float scaleHeight)
+		{
+			return new Rect(0, (1f - scaleHeight) / 2f, 1f, scaleHeight);
+		}
 
-            return new Rect((1f - scalewidth) / 2f, 0, scalewidth, 1f);
-        }
+		private Rect GetPillarboxRect(float scaleHeight)
+		{
+			float scalewidth = 1.0f / scaleHeight;
 
-        private bool ShouldUpdateLetterbox()
-        {
-            if (shouldUpdateLetterbox)
-                return Screen.width != currentScreenWidth || Screen.height != currentScreenHeight;
-            else
-                return false; 
-        }
+			return new Rect((1f - scalewidth) / 2f, 0, scalewidth, 1f);
+		}
 
-        private void OnValidate()
-        {
-            targetWidth = Mathf.Max(1, targetWidth);
-            targetHeight = Mathf.Max(1, targetHeight);
+		private bool ShouldUpdateLetterbox()
+		{
+			if (shouldUpdateLetterbox)
+				return Screen.width != currentScreenWidth || Screen.height != currentScreenHeight;
+			else
+				return false;
+		}
 
-            UpdateLetterbox();
-        }
-    }
+		private void OnValidate()
+		{
+			targetWidth = Mathf.Max(1, targetWidth);
+			targetHeight = Mathf.Max(1, targetHeight);
+
+			UpdateLetterbox();
+		}
+	}
 }
